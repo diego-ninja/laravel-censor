@@ -275,7 +275,7 @@ This project is developed and maintained by 🥷 [Diego Rin](https://diego.ninja
 Special thanks to:
 
 - [Laravel Framework](https://laravel.com/) for providing the most exciting and well-crafted PHP framework.
-- [Snipe](https://github.com/snipe) for developing the [inital code](https://github.com/snipe/banbuilder) that serves Laravel Censor as starting point.
+- [Snipe](https://github.com/snipe) for developing the [initial code](https://github.com/snipe/banbuilder) that serves Laravel Censor as starting point.
 - All the contributors and testers who have helped to improve this project through their contributions.
 
 If you find this project useful, please consider giving it a ⭐ on GitHub!
