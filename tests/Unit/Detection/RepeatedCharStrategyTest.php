@@ -19,8 +19,8 @@ test('repeated chars strategy detects repeated characters', function () {
             ->toHaveCount(1)
             ->sequence(
                 fn ($match) => $match
-                    ->word->toBe($text)
-                    ->type->toBe(MatchType::Repeated)
+                    ->word()->toBe($text)
+                    ->type()->toBe(MatchType::Repeated)
             );
     }
 });
@@ -39,8 +39,8 @@ test('repeated chars strategy handles multiple words', function () {
     expect($result)
         ->toHaveCount(2)
         ->sequence(
-            fn ($match) => $match->word->toBe('fuuuck'),
-            fn ($match) => $match->word->toBe('shiiit')
+            fn ($match) => $match->word()->toBe('fuuuck'),
+            fn ($match) => $match->word()->toBe('shiiit')
         );
 });
 

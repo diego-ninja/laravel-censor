@@ -3,11 +3,13 @@
 namespace Ninja\Censor\Detection\Strategy;
 
 use Ninja\Censor\Collections\MatchCollection;
-use Ninja\Censor\Detection\Contracts\DetectionStrategy;
+use Ninja\Censor\Collections\OccurrenceCollection;
 use Ninja\Censor\Enums\MatchType;
+use Ninja\Censor\Support\Calculator;
 use Ninja\Censor\ValueObject\Coincidence;
+use Ninja\Censor\ValueObject\Position;
 
-final class AffixStrategy implements DetectionStrategy
+final class AffixStrategy extends AbstractStrategy
 {
     /** @var array<string, array<string>> */
     private array $cache = [];
@@ -44,12 +46,35 @@ final class AffixStrategy implements DetectionStrategy
             /** @var string $textWord */
             $lowerTextWord = mb_strtolower($textWord);
             if (isset($index[$lowerTextWord])) {
-                $matches->addCoincidence(new Coincidence($textWord, MatchType::Variation));
+                $positions = [];
+                $pos = 0;
+
+                while (($pos = mb_stripos($text, $textWord, $pos)) !== false) {
+                    $positions[] = new Position($pos, mb_strlen($textWord));
+                    $pos += mb_strlen($textWord);
+                }
+
+                if (! empty($positions)) {
+                    $occurrences = new OccurrenceCollection($positions);
+
+                    $matches->addCoincidence(
+                        new Coincidence(
+                            word: $textWord,
+                            type: MatchType::Variation,
+                            score: Calculator::score($text, $textWord, MatchType::Variation, $occurrences),
+                            confidence: Calculator::confidence($text, $textWord, MatchType::Variation, $occurrences),
+                            occurrences: $occurrences,
+                            context: [
+                                'original' => $index[$lowerTextWord],
+                                'variation_type' => 'affix',
+                            ]
+                        )
+                    );
+                }
             }
         }
 
         return $matches;
-
     }
 
     /**

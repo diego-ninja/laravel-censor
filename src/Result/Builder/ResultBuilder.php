@@ -41,7 +41,7 @@ final class ResultBuilder implements ResultBuilderContract
     {
         $clone = clone $this;
         $clone->original = $text;
-        $clone->replaced = $text; // Default to original if not replaced
+        $clone->replaced = $text;
 
         return $clone;
     }

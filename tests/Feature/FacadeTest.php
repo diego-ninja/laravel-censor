@@ -6,6 +6,8 @@ use Ninja\Censor\Checkers\PurgoMalum;
 use Ninja\Censor\Enums\Provider;
 use Ninja\Censor\Facades\Censor;
 use Ninja\Censor\Result\Contracts\Result;
+use Ninja\Censor\Services\Adapters\PurgoMalumAdapter;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 
 test('facade check method returns result instance', function () {
     $result = Censor::check('test text');
@@ -28,6 +30,8 @@ test('facade with method returns correct service result', function () {
     // Configure mock response for PurgoMalum
     $this->app->bind('purgomalum', function ($app) {
         return new PurgoMalum(
+            new PurgoMalumAdapter,
+            app(TransformationPipeline::class),
             $this->getMockedHttpClient([
                 ['result' => '**** text'],
             ])
@@ -48,6 +52,8 @@ test('facade can switch between services while maintaining state', function () {
     // Test PurgoMalum
     $this->app->bind('purgomalum', function ($app) {
         return new PurgoMalum(
+            new PurgoMalumAdapter,
+            app(TransformationPipeline::class),
             $this->getMockedHttpClient([
                 ['result' => '**** text'],
             ])

@@ -3,11 +3,13 @@
 namespace Ninja\Censor\Detection\Strategy;
 
 use Ninja\Censor\Collections\MatchCollection;
-use Ninja\Censor\Detection\Contracts\DetectionStrategy;
+use Ninja\Censor\Collections\OccurrenceCollection;
 use Ninja\Censor\Enums\MatchType;
+use Ninja\Censor\Support\Calculator;
 use Ninja\Censor\ValueObject\Coincidence;
+use Ninja\Censor\ValueObject\Position;
 
-final readonly class RepeatedCharStrategy implements DetectionStrategy
+final class RepeatedCharStrategy extends AbstractStrategy
 {
     public function detect(string $text, iterable $words): MatchCollection
     {
@@ -18,22 +20,40 @@ final readonly class RepeatedCharStrategy implements DetectionStrategy
                 continue;
             }
 
-            $pattern = '/\b';
-            foreach (str_split($badWord) as $char) {
-                $pattern .= preg_quote($char, '/').'+';
-            }
-            $pattern .= '\b/iu';
-
-            if (preg_match_all($pattern, $text, $found) !== false) {
-                foreach ($found[0] as $match) {
+            $pattern = $this->createPattern($badWord);
+            if (preg_match_all($pattern, $text, $found, PREG_OFFSET_CAPTURE) !== false) {
+                foreach ($found[0] as [$match, $offset]) {
                     if ($this->hasRepeatedChars($match)) {
-                        $matches->addCoincidence(new Coincidence($match, MatchType::Repeated));
+                        $occurrences = new OccurrenceCollection([
+                            new Position($offset, mb_strlen($match)),
+                        ]);
+
+                        $matches->addCoincidence(
+                            new Coincidence(
+                                word: $match,
+                                type: MatchType::Repeated,
+                                score: Calculator::score($text, $match, MatchType::Repeated, $occurrences),
+                                confidence: Calculator::confidence($text, $match, MatchType::Repeated, $occurrences),
+                                occurrences: $occurrences,
+                                context: ['original' => $badWord]
+                            )
+                        );
                     }
                 }
             }
         }
 
         return $matches;
+    }
+
+    private function createPattern(string $word): string
+    {
+        $pattern = '/\b';
+        foreach (str_split($word) as $char) {
+            $pattern .= preg_quote($char, '/').'+';
+        }
+
+        return $pattern.'\b/iu';
     }
 
     private function hasRepeatedChars(string $text): bool

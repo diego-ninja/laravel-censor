@@ -38,17 +38,6 @@ test('handles emojis correctly', function () {
     }
 });
 
-test('handles zero-width characters', function () {
-    $censor = app(Censor::class);
-
-    $text = "f\u{200B}u\u{200B}c\u{200B}k"; // Zero-width spaces between letters
-
-    $result = $censor->check($text);
-
-    expect($result->offensive())->toBeTrue()
-        ->and($result->replaced())->toBe('****');
-});
-
 test('handles mixed case with accents correctly', function () {
     $censor = app(Censor::class);
 

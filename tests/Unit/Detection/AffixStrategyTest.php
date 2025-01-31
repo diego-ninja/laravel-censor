@@ -24,8 +24,8 @@ test('word variant strategy detects suffixes', function () {
             ->toHaveCount(1)
             ->sequence(
                 fn ($match) => $match
-                    ->word->toBe($text)
-                    ->type->toBe(MatchType::Variation)
+                    ->word()->toBe($text)
+                    ->type()->toBe(MatchType::Variation)
             );
     }
 });
@@ -49,8 +49,8 @@ test('word variant strategy detects prefixes', function () {
             ->toHaveCount(1)
             ->sequence(
                 fn ($match) => $match
-                    ->word->toBe($text)
-                    ->type->toBe(MatchType::Variation)
+                    ->word()->toBe($text)
+                    ->type()->toBe(MatchType::Variation)
             );
     }
 });
@@ -74,8 +74,8 @@ test('word variant strategy detects prefix-suffix combinations', function () {
             ->toHaveCount(1)
             ->sequence(
                 fn ($match) => $match
-                    ->word->toBe($text)
-                    ->type->toBe(MatchType::Variation)
+                    ->word()->toBe($text)
+                    ->type()->toBe(MatchType::Variation)
             );
     }
 });
@@ -109,9 +109,9 @@ test('word variant strategy preserves case', function () {
     expect($result)
         ->toHaveCount(3)
         ->sequence(
-            fn ($match) => $match->word->toBe('UnFucking'),
-            fn ($match) => $match->word->toBe('REFUCKED'),
-            fn ($match) => $match->word->toBe('superFUCKER')
+            fn ($match) => $match->word()->toBe('UnFucking'),
+            fn ($match) => $match->word()->toBe('REFUCKED'),
+            fn ($match) => $match->word()->toBe('superFUCKER')
         );
 });
 

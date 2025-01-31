@@ -16,11 +16,11 @@ test('pattern strategy detects exact matches', function () {
         ->toHaveCount(2)
         ->sequence(
             fn ($match) => $match
-                ->word->toBe('fuck')
-                ->type->toBe(MatchType::Pattern),
+                ->word()->toBe('fuck')
+                ->type()->toBe(MatchType::Pattern),
             fn ($match) => $match
-                ->word->toBe('shit')
-                ->type->toBe(MatchType::Pattern)
+                ->word()->toBe('shit')
+                ->type()->toBe(MatchType::Pattern)
         );
 
 });
@@ -40,8 +40,8 @@ test('pattern strategy handles character substitutions', function () {
     expect($result)
         ->toHaveCount(2)
         ->sequence(
-            fn ($match) => $match->word->toBe('fvck'),
-            fn ($match) => $match->word->toBe('sh!t')
+            fn ($match) => $match->word()->toBe('fvck'),
+            fn ($match) => $match->word()->toBe('sh!t')
         );
 });
 

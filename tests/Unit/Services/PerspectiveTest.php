@@ -5,6 +5,8 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Ninja\Censor\Checkers\PerspectiveAI;
+use Ninja\Censor\Services\Adapters\PerspectiveAdapter;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 
 test('perspective detects toxic content', function () {
     $mock = new MockHandler([
@@ -27,7 +29,12 @@ test('perspective detects toxic content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new PerspectiveAI('fake-key', $client);
+    $checker = new PerspectiveAI(
+        key: 'fake-key',
+        adapter: new PerspectiveAdapter,
+        pipeline: app(TransformationPipeline::class),
+        client: $client
+    );
 
     $result = $checker->check('toxic content');
 
@@ -53,13 +60,18 @@ test('perspective handles clean content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new PerspectiveAI('fake-key', $client);
+    $checker = new PerspectiveAI(
+        key: 'fake-key',
+        adapter: new PerspectiveAdapter,
+        pipeline: app(TransformationPipeline::class),
+        client: $client
+    );
 
     $result = $checker->check('clean content');
 
     expect($result)
         ->toBeClean()
-        ->and($result->score()->value())->toBeLessThan(0.7)
+        ->and($result->score()->value())->toBeLessThan(0.1)
         ->and($result->confidence()->value())->toBeGreaterThan(0.7)
         ->and($result->categories())->toBeEmpty()
         ->and($result->replaced())->toBe('clean content')

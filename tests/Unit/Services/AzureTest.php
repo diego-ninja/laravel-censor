@@ -5,6 +5,8 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Ninja\Censor\Checkers\AzureAI;
+use Ninja\Censor\Services\Adapters\AzureAdapter;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 
 test('azure detects harmful content', function () {
     $mock = new MockHandler([
@@ -28,7 +30,14 @@ test('azure detects harmful content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new AzureAI('endpoint', 'fake-key', '2024-09-01', $client);
+    $checker = new AzureAI(
+        endpoint: 'endpoint',
+        key: 'fake-key',
+        version: '2024-09-01',
+        adapter: new AzureAdapter,
+        pipeline: app(TransformationPipeline::class),
+        httpClient: $client
+    );
 
     $result = $checker->check('offensive content');
 
@@ -54,7 +63,14 @@ test('azure handles clean content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new AzureAI('endpoint', 'fake-key', '2024-09-01', $client);
+    $checker = new AzureAI(
+        endpoint: 'endpoint',
+        key: 'fake-key',
+        version: '2024-09-01',
+        adapter: new AzureAdapter,
+        pipeline: app(TransformationPipeline::class),
+        httpClient: $client
+    );
 
     $result = $checker->check('clean content');
 

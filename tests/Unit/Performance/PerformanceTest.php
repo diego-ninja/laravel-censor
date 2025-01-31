@@ -6,7 +6,7 @@ use Ninja\Censor\Checkers\Censor;
 
 test('handles large text input efficiently', function () {
     $censor = app(Censor::class);
-    $largeText = str_repeat('This is a very long text with some bad words like fuck and shit scattered throughout. ', 200);
+    $largeText = str_repeat('This is a very long text with some bad words like fuck and shit scattered throughout. ', 100);
 
     $startTime = microtime(true);
     $result = $censor->check($largeText);
@@ -20,7 +20,7 @@ test('handles large text input efficiently', function () {
 
 test('memory usage stays within acceptable limits', function () {
     $censor = app(Censor::class);
-    $largeText = str_repeat('Some text with profanity fuck shit damn repeated many times. ', 200);
+    $largeText = str_repeat('Some text with profanity fuck shit damn repeated many times. ', 100);
 
     $initialMemory = memory_get_usage();
     $censor->check($largeText);

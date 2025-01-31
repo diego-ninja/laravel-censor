@@ -3,6 +3,7 @@
 namespace Ninja\Censor\Index;
 
 use Generator;
+use Ninja\Censor\Dictionary\LazyDictionary;
 
 final class TrieIndex
 {
@@ -10,9 +11,9 @@ final class TrieIndex
     private array $root;
 
     /**
-     * @param  array<int, string>|Generator<int, string>  $words
+     * @param  array<int, string>|LazyDictionary  $words
      */
-    public function __construct(array|Generator $words = [])
+    public function __construct(array|LazyDictionary $words = [])
     {
         $this->root = [];
         foreach ($words as $word) {

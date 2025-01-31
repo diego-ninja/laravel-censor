@@ -2,10 +2,15 @@
 
 namespace Ninja\Censor;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Validator;
 use Ninja\Censor\Cache\Contracts\PatternCache;
+use Ninja\Censor\Checkers\AzureAI;
 use Ninja\Censor\Checkers\Contracts\ProfanityChecker;
+use Ninja\Censor\Checkers\PerspectiveAI;
+use Ninja\Censor\Checkers\PurgoMalum;
+use Ninja\Censor\Checkers\TisaneAI;
 use Ninja\Censor\Dictionary\LazyDictionary;
 use Ninja\Censor\Enums\Provider;
 use Ninja\Censor\Factories\ProfanityCheckerFactory;
@@ -13,6 +18,18 @@ use Ninja\Censor\Index\TrieIndex;
 use Ninja\Censor\Processors\AbstractProcessor;
 use Ninja\Censor\Processors\Contracts\Processor;
 use Ninja\Censor\Processors\DefaultProcessor;
+use Ninja\Censor\Services\Adapters\AzureAdapter;
+use Ninja\Censor\Services\Adapters\CensorAdapter;
+use Ninja\Censor\Services\Adapters\PerspectiveAdapter;
+use Ninja\Censor\Services\Adapters\PurgoMalumAdapter;
+use Ninja\Censor\Services\Adapters\TisaneAdapter;
+use Ninja\Censor\Services\Contracts\ServiceAdapter;
+use Ninja\Censor\Services\Pipeline\Stage\MatchesStage;
+use Ninja\Censor\Services\Pipeline\Stage\MetadataStage;
+use Ninja\Censor\Services\Pipeline\Stage\OffensiveStage;
+use Ninja\Censor\Services\Pipeline\Stage\ScoreStage;
+use Ninja\Censor\Services\Pipeline\Stage\TextStage;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 use Ninja\Censor\Support\PatternGenerator;
 
 final class CensorServiceProvider extends ServiceProvider
@@ -48,10 +65,43 @@ final class CensorServiceProvider extends ServiceProvider
             },
             message: 'The :attribute contains offensive language.'
         );
+
+        $this->loadRoutesFrom(__DIR__.'/../routes/censor.php');
     }
 
     public function register(): void
     {
+        $this->app->bind(ServiceAdapter::class, function (Application $app) {
+            return match (config('censor.default_service', Provider::Local)) {
+                Provider::Azure => $app->make(AzureAdapter::class),
+                Provider::Perspective => $app->make(PerspectiveAdapter::class),
+                Provider::PurgoMalum => $app->make(PurgoMalumAdapter::class),
+                Provider::Tisane => $app->make(TisaneAdapter::class),
+                default => $app->make(CensorAdapter::class),
+            };
+        });
+
+        $this->app->singleton(CensorAdapter::class);
+        $this->app->singleton(AzureAdapter::class);
+        $this->app->singleton(PerspectiveAdapter::class);
+        $this->app->singleton(PurgoMalumAdapter::class);
+        $this->app->singleton(TisaneAdapter::class);
+
+        $this->app->when(AzureAI::class)->needs(ServiceAdapter::class)->give(AzureAdapter::class);
+        $this->app->when(TisaneAI::class)->needs(ServiceAdapter::class)->give(TisaneAdapter::class);
+        $this->app->when(\Ninja\Censor\Checkers\Censor::class)->needs(ServiceAdapter::class)->give(CensorAdapter::class);
+        $this->app->when(PerspectiveAI::class)->needs(ServiceAdapter::class)->give(PerspectiveAdapter::class);
+        $this->app->when(PurgoMalum::class)->needs(ServiceAdapter::class)->give(PurgoMalumAdapter::class);
+
+        $this->app->singleton(TransformationPipeline::class, function () {
+            return (new TransformationPipeline)
+                ->addStage(new ScoreStage)
+                ->addStage(new MatchesStage)
+                ->addStage(new TextStage(app(Whitelist::class)))
+                ->addStage(new MetadataStage)
+                ->addStage(new OffensiveStage);
+        });
+
         $this->registerProfanityProviders();
 
         /** @var Provider $default */
@@ -138,8 +188,13 @@ final class CensorServiceProvider extends ServiceProvider
             /** @var Processor $processor */
             $processor = app(Processor::class);
 
+            /** @var ServiceAdapter $adapter */
+            $adapter = app(ServiceAdapter::class);
+
             return new \Ninja\Censor\Checkers\Censor(
-                processor: $processor
+                processor: $processor,
+                adapter: $adapter,
+                pipeline: app(TransformationPipeline::class)
             );
         });
     }

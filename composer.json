@@ -21,8 +21,7 @@
         "illuminate/http": "^10.0|^11.0",
         "illuminate/support": "^10.0|^11.0",
         "symfony/string": "^7.2",
-        "google/cloud-language": "^0.34.1",
-        "aws/aws-sdk-php": "^3.334"
+        "lorisleiva/laravel-actions": "^2.8"
     },
     "require-dev": {
         "phpunit/phpunit": "^11",
@@ -35,7 +34,8 @@
         "phpstan/phpstan": "^2",
         "phpstan/phpstan-deprecation-rules": "^2",
         "phpstan/phpstan-strict-rules": "^2",
-        "laravel/octane": "^2.6"
+        "laravel/octane": "^2.6",
+        "wulfheart/laravel-actions-ide-helper": "^0.8.0"
     },
     "autoload": {
         "psr-4": {

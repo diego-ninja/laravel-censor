@@ -3,30 +3,41 @@
 namespace Ninja\Censor\Checkers;
 
 use Ninja\Censor\Checkers\Contracts\ProfanityChecker;
-use Ninja\Censor\Collections\MatchCollection;
 use Ninja\Censor\Processors\Contracts\Processor;
-use Ninja\Censor\Result\AbstractResult;
-use Ninja\Censor\Result\Builder\ResultBuilder;
 use Ninja\Censor\Result\Contracts\Result;
+use Ninja\Censor\Services\Contracts\ServiceAdapter;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 
 final class Censor implements ProfanityChecker
 {
-    private const CHUNK_SIZE = 1000;
+    private const CHUNK_SIZE = 500;
 
     public function __construct(
-        private readonly Processor $processor
+        private readonly Processor $processor,
+        private readonly ServiceAdapter $adapter,
+        private readonly TransformationPipeline $pipeline
     ) {}
 
     public function check(string $text): Result
     {
         if (mb_strlen($text) < self::CHUNK_SIZE) {
-            return $this->processor->process([$text])[0];
+            $processorResult = $this->processor->process([$text])[0];
+
+            $adaptedResult = $this->adapter->adapt($text, [
+                'result' => $processorResult,
+            ]);
+
+            return $this->pipeline->process($adaptedResult);
         }
 
         $chunks = $this->split($text);
         $results = $this->processor->process($chunks);
 
-        return $this->mergeResults($results, $text);
+        $adaptedResult = $this->adapter->adapt($text, [
+            'result' => $results[0],
+        ]);
+
+        return $this->pipeline->process($adaptedResult);
     }
 
     /**
@@ -56,28 +67,5 @@ final class Censor implements ProfanityChecker
         }
 
         return $chunks;
-    }
-
-    /**
-     * @param  array<AbstractResult>  $results
-     */
-    private function mergeResults(array $results, string $originalText): Result
-    {
-        $matches = new MatchCollection;
-        $processedWords = [];
-
-        foreach ($results as $result) {
-            $matches = $matches->merge($result->matches() ?? new MatchCollection);
-            $processedWords = array_merge($processedWords, $result->words());
-        }
-
-        return (new ResultBuilder)
-            ->withOriginalText($originalText)
-            ->withWords(array_unique($processedWords))
-            ->withReplaced($matches->clean($originalText))
-            ->withScore($matches->score($originalText))
-            ->withOffensive($matches->offensive($originalText))
-            ->withConfidence($matches->confidence())
-            ->build();
     }
 }

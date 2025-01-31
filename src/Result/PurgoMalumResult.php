@@ -5,6 +5,7 @@ namespace Ninja\Censor\Result;
 use Ninja\Censor\Collections\MatchCollection;
 use Ninja\Censor\Enums\MatchType;
 use Ninja\Censor\Result\Builder\ResultBuilder;
+use Ninja\Censor\Support\Calculator;
 use Ninja\Censor\ValueObject\Coincidence;
 
 final class PurgoMalumResult extends AbstractResult
@@ -24,7 +25,7 @@ final class PurgoMalumResult extends AbstractResult
             ->withOffensive($text !== $response['result'])
             ->withWords($matches->words())
             ->withMatches($matches)
-            ->withScore($matches->score($text))
+            ->withScore($matches->score())
             ->withConfidence($matches->confidence())
             ->withReplaced($response['result'])
             ->build();
@@ -38,7 +39,13 @@ final class PurgoMalumResult extends AbstractResult
 
         foreach ($originalWords as $i => $word) {
             if (isset($replacedWords[$i]) && $word !== $replacedWords[$i]) {
-                $matches->add(new Coincidence($word, MatchType::Exact));
+                $matches->add(new Coincidence(
+                    word: $word,
+                    type: MatchType::Exact,
+                    score: Calculator::score($word, $original, MatchType::Exact),
+                    confidence: Calculator::confidence($word, $original, MatchType::Exact),
+                    context: ['original' => $word, 'replaced' => $replacedWords[$i]]
+                ));
             }
         }
 

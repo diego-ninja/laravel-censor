@@ -1,24 +1,25 @@
 <?php
 
-use Ninja\Censor\Checkers\Contracts\ProfanityChecker;
+use Ninja\Censor\Actions\CheckAction;
+use Ninja\Censor\Actions\CleanAction;
+use Ninja\Censor\Result\Contracts\Result;
 
 if (! function_exists('is_offensive')) {
     function is_offensive(string $text): bool
     {
-        /** @var ProfanityChecker $service */
-        $service = app(ProfanityChecker::class);
+        /** @var Result $result */
+        $result = CheckAction::run($text);
 
-        return $service->check($text)->offensive();
+        return $result->offensive();
     }
 }
 
 if (! function_exists('clean')) {
     function clean(string $text): string
     {
-        /** @var ProfanityChecker $service */
-        $service = app(ProfanityChecker::class);
+        /** @var string $result */
+        $result = CleanAction::run($text);
 
-        return $service->check($text)->replaced();
-
+        return $result;
     }
 }

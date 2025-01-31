@@ -3,12 +3,14 @@
 namespace Ninja\Censor\Detection\Strategy;
 
 use Ninja\Censor\Collections\MatchCollection;
-use Ninja\Censor\Detection\Contracts\DetectionStrategy;
+use Ninja\Censor\Collections\OccurrenceCollection;
 use Ninja\Censor\Detection\OptimizedLevenshtein;
 use Ninja\Censor\Enums\MatchType;
+use Ninja\Censor\Support\Calculator;
 use Ninja\Censor\ValueObject\Coincidence;
+use Ninja\Censor\ValueObject\Position;
 
-final readonly class LevenshteinStrategy implements DetectionStrategy
+final class LevenshteinStrategy extends AbstractStrategy
 {
     private int $threshold;
 
@@ -23,7 +25,6 @@ final readonly class LevenshteinStrategy implements DetectionStrategy
     public function detect(string $text, iterable $words): MatchCollection
     {
         $matches = new MatchCollection;
-
         $dictionary = is_array($words) ? $words : iterator_to_array($words);
         $levenshtein = new OptimizedLevenshtein($dictionary);
 
@@ -35,9 +36,26 @@ final readonly class LevenshteinStrategy implements DetectionStrategy
         foreach ($textWords as $textWord) {
             $similarWords = $levenshtein->findSimilar($textWord, $this->threshold);
             if (! empty($similarWords)) {
-                $matches->addCoincidence(new Coincidence($textWord, MatchType::Levenshtein));
-            }
+                $positions = [];
+                $pos = 0;
+                while (($pos = mb_stripos($text, $textWord, $pos)) !== false) {
+                    $positions[] = new Position($pos, mb_strlen($textWord));
+                    $pos += mb_strlen($textWord);
+                }
 
+                $occurrences = new OccurrenceCollection($positions);
+
+                $matches->addCoincidence(
+                    new Coincidence(
+                        word: $textWord,
+                        type: MatchType::Levenshtein,
+                        score: Calculator::score($text, $textWord, MatchType::Levenshtein, $occurrences),
+                        confidence: Calculator::confidence($text, $textWord, MatchType::Levenshtein, $occurrences),
+                        occurrences: $occurrences,
+                        context: ['similar_words' => $similarWords]
+                    )
+                );
+            }
         }
 
         return $matches;

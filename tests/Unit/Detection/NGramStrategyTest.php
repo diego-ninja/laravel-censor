@@ -16,8 +16,8 @@ test('ngram strategy detects offensive phrases', function () {
         ->toHaveCount(1)
         ->sequence(
             fn ($match) => $match
-                ->word->toBe('son of a bitch')
-                ->type->toBe(MatchType::NGram)
+                ->word()->toBe('son of a bitch')
+                ->type()->toBe(MatchType::NGram)
         );
 
 });
@@ -58,8 +58,8 @@ test('ngram strategy handles overlapping phrases correctly', function () {
     expect($result)
         ->toHaveCount(2)
         ->sequence(
-            fn ($match) => $match->word->toBe('piece of shit'),
-            fn ($match) => $match->word->toBe('shit happens')
+            fn ($match) => $match->word()->toBe('piece of shit'),
+            fn ($match) => $match->word()->toBe('shit happens')
         );
 });
 

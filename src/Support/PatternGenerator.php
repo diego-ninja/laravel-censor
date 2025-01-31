@@ -12,20 +12,25 @@ final class PatternGenerator
     private array $patterns = [];
 
     /**
-     * @param  array<string>  $replacements
+     * @param  array<string, string>  $replacements
      */
     public function __construct(private array $replacements = [], private bool $fullWords = true) {}
 
     public static function withDictionary(LazyDictionary $dictionary): self
     {
-        /** @var array<string> $replacements */
+        /** @var array<string, string> $replacements */
         $replacements = config('censor.replacements', []);
 
-        /** @var array<string> $words */
-        $words = iterator_to_array($dictionary->getWords());
-
         $generator = new self($replacements);
-        $generator->patterns = $generator->forWords($words);
+
+        foreach ($dictionary as $word) {
+            if (! empty($word)) {
+                $generator->patterns = array_merge(
+                    $generator->patterns,
+                    $generator->forWord($word)
+                );
+            }
+        }
 
         return $generator;
     }

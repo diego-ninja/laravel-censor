@@ -8,7 +8,7 @@ use Ninja\Censor\Detection\Contracts\DetectionStrategy;
 /**
  * @extends Collection<int, DetectionStrategy>
  */
-class StrategyCollection extends Collection implements DetectionStrategy
+final class StrategyCollection extends Collection implements DetectionStrategy
 {
     public function addStrategy(DetectionStrategy $strategy): void
     {

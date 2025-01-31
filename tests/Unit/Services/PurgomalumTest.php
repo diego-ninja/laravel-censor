@@ -5,6 +5,8 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Ninja\Censor\Checkers\PurgoMalum;
+use Ninja\Censor\Services\Adapters\PurgoMalumAdapter;
+use Ninja\Censor\Services\Pipeline\TransformationPipeline;
 
 test('purgomalum detects offensive content', function () {
     $mock = new MockHandler([
@@ -14,7 +16,11 @@ test('purgomalum detects offensive content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new PurgoMalum($client);
+    $checker = new PurgoMalum(
+        adapter: new PurgoMalumAdapter,
+        pipeline: app(TransformationPipeline::class),
+        client: $client
+    );
 
     $result = $checker->check('fuck you shit');
 
@@ -36,7 +42,11 @@ test('purgomalum handles clean content', function () {
     ]);
 
     $client = new Client(['handler' => HandlerStack::create($mock)]);
-    $checker = new PurgoMalum($client);
+    $checker = new PurgoMalum(
+        adapter: new PurgoMalumAdapter,
+        pipeline: app(TransformationPipeline::class),
+        client: $client
+    );
 
     $result = $checker->check('clean text here');
 

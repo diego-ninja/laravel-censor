@@ -3,11 +3,13 @@
 namespace Ninja\Censor\Detection\Strategy;
 
 use Ninja\Censor\Collections\MatchCollection;
-use Ninja\Censor\Detection\Contracts\DetectionStrategy;
+use Ninja\Censor\Collections\OccurrenceCollection;
 use Ninja\Censor\Enums\MatchType;
+use Ninja\Censor\Support\Calculator;
 use Ninja\Censor\ValueObject\Coincidence;
+use Ninja\Censor\ValueObject\Position;
 
-final readonly class NGramStrategy implements DetectionStrategy
+final class NGramStrategy extends AbstractStrategy
 {
     public function detect(string $text, iterable $words): MatchCollection
     {
@@ -18,10 +20,22 @@ final readonly class NGramStrategy implements DetectionStrategy
             $phrasePattern = preg_quote(mb_strtolower($phrase), '/');
             $pattern = '/\b'.$phrasePattern.'\b/iu';
 
-            if (preg_match_all($pattern, mb_strtolower($text), $found, PREG_OFFSET_CAPTURE) !== false) {
-                foreach ($found[0] as $match) {
-                    $originalText = substr($text, $match[1], strlen($match[0]));
-                    $matches->addCoincidence(new Coincidence($originalText, MatchType::NGram));
+            if (preg_match_all($pattern, $text, $found, PREG_OFFSET_CAPTURE) !== false) {
+                foreach ($found[0] as [$match, $offset]) {
+                    $occurrences = new OccurrenceCollection([
+                        new Position($offset, mb_strlen($match)),
+                    ]);
+
+                    $matches->addCoincidence(
+                        new Coincidence(
+                            word: $match,
+                            type: MatchType::NGram,
+                            score: Calculator::score($text, $match, MatchType::NGram, $occurrences),
+                            confidence: Calculator::confidence($text, $match, MatchType::NGram, $occurrences),
+                            occurrences: $occurrences,
+                            context: ['original' => $phrase]
+                        )
+                    );
                 }
             }
         }
