@@ -37,12 +37,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default profanity service
+    | Default text processor
     |--------------------------------------------------------------------------
     | Define the default profanity service to use
     |
     */
     'default_service' => Ninja\Sentinel\Enums\Provider::Local,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fall back text processor
+    |--------------------------------------------------------------------------
+    | Define the fallback service to use in case of failure
+    |
+    */
+    'fallback_service' => Ninja\Sentinel\Enums\Provider::Local,
 
     /*
     |--------------------------------------------------------------------------
